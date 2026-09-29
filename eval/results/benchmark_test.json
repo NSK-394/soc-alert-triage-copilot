@@ -3,9 +3,43 @@
   "max_records_requested": 2000,
   "records_loaded": 2000,
   "jev": {
-    "preflight_available": false,
-    "preflight_error": "JevUnavailableError (documented fail-safe contract): Jev returned a non-retryable error: POST https://api.typesafe.ai/v1/systemone: 401 Cannot authenticate with the server. Please check your API key and try again. (request_id=req_01a0ec18628c7bf1a3be23a47a7e1f7d)",
-    "note": "Jev API unreachable/unauthorized -- no live Jev numbers in this report. See preflight_error."
+    "preflight_available": true,
+    "preflight_error": null,
+    "n_scored": 2000,
+    "n_failed_after_preflight": 0,
+    "n_unexpected_errors": 0,
+    "metrics": {
+      "macro_f1": 0.12025157232704403,
+      "accuracy": 0.1195,
+      "per_class": {
+        "true_positive": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 668
+        },
+        "benign_positive": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 899
+        },
+        "false_positive": {
+          "precision": 0.2679372197309417,
+          "recall": 0.5519630484988453,
+          "f1": 0.3607547169811321,
+          "support": 433
+        }
+      },
+      "n_scored": 2000,
+      "other_verdict_count": 1108,
+      "other_verdict_breakdown_by_true_label": {
+        "false_positive": 194,
+        "true_positive": 349,
+        "benign_positive": 565
+      },
+      "other_verdict_scoring_note": "'other' predictions are scored as always-wrong against the true label (never a TP for any of the 3 GUIDE classes) and are NOT dropped from the denominator -- per-class support totals include them."
+    }
   },
   "baseline_majority": {
     "majority_class": "benign_positive",
@@ -33,25 +67,25 @@
     }
   },
   "baseline_gbm": {
-    "macro_f1": 0.7451507201499914,
-    "accuracy": 0.7735840264672305,
+    "macro_f1": 0.7709105812031526,
+    "accuracy": 0.7929917755877076,
     "per_class": {
       "true_positive": {
-        "precision": 0.8864932171177665,
-        "recall": 0.7301236033896475,
-        "f1": 0.8007458710708577,
+        "precision": 0.9190256307301078,
+        "recall": 0.741242510929994,
+        "f1": 0.8206154765461607,
         "support": 18527
       },
       "benign_positive": {
-        "precision": 0.7027707808564232,
-        "recall": 0.9237854433808922,
-        "f1": 0.7982624980492119,
+        "precision": 0.7123337918386061,
+        "recall": 0.9352838480524953,
+        "f1": 0.8087243955128706,
         "support": 16611
       },
       "false_positive": {
-        "precision": 0.7432641153252102,
-        "recall": 0.5564692278041886,
-        "f1": 0.6364437913299045,
+        "precision": 0.7728599221789884,
+        "recall": 0.6124887575485032,
+        "f1": 0.6833918715504265,
         "support": 7783
       }
     }
@@ -59,7 +93,98 @@
   "calibration": {
     "signal": "is_false_positive_prob",
     "note": "predicted_confidence_avg is the mean is_false_positive_prob in the bin; actual_accuracy is the empirical frequency that ground_truth_label == 'false_positive' for records in that bin (standard reliability-diagram definition: predicted P(event) vs. observed frequency of that event). Empty when Jev is unavailable.",
-    "bins": []
+    "bins": [
+      {
+        "bin_range": [
+          0.0,
+          0.1
+        ],
+        "predicted_confidence_avg": null,
+        "actual_accuracy": null,
+        "count": 0
+      },
+      {
+        "bin_range": [
+          0.1,
+          0.2
+        ],
+        "predicted_confidence_avg": null,
+        "actual_accuracy": null,
+        "count": 0
+      },
+      {
+        "bin_range": [
+          0.2,
+          0.3
+        ],
+        "predicted_confidence_avg": null,
+        "actual_accuracy": null,
+        "count": 0
+      },
+      {
+        "bin_range": [
+          0.3,
+          0.4
+        ],
+        "predicted_confidence_avg": null,
+        "actual_accuracy": null,
+        "count": 0
+      },
+      {
+        "bin_range": [
+          0.4,
+          0.5
+        ],
+        "predicted_confidence_avg": 0.475,
+        "actual_accuracy": 0.0,
+        "count": 2
+      },
+      {
+        "bin_range": [
+          0.5,
+          0.6
+        ],
+        "predicted_confidence_avg": 0.5721296296296294,
+        "actual_accuracy": 0.14351851851851852,
+        "count": 216
+      },
+      {
+        "bin_range": [
+          0.6,
+          0.7
+        ],
+        "predicted_confidence_avg": 0.64620253164557,
+        "actual_accuracy": 0.16244725738396623,
+        "count": 948
+      },
+      {
+        "bin_range": [
+          0.7,
+          0.8
+        ],
+        "predicted_confidence_avg": 0.7290948275862077,
+        "actual_accuracy": 0.16522988505747127,
+        "count": 696
+      },
+      {
+        "bin_range": [
+          0.8,
+          0.9
+        ],
+        "predicted_confidence_avg": 0.841627906976744,
+        "actual_accuracy": 0.9612403100775194,
+        "count": 129
+      },
+      {
+        "bin_range": [
+          0.9,
+          1.0
+        ],
+        "predicted_confidence_avg": 0.9077777777777778,
+        "actual_accuracy": 1.0,
+        "count": 9
+      }
+    ]
   },
   "auto_close_threshold_sweep": {
     "policy": {
@@ -105,10 +230,59 @@
       0.9,
       0.95
     ],
-    "table": [],
+    "table": [
+      {
+        "confidence_threshold": 0.5,
+        "auto_close_count": 123,
+        "auto_close_false_negatives": 6,
+        "auto_close_fnr": 0.04878048780487805
+      },
+      {
+        "confidence_threshold": 0.6,
+        "auto_close_count": 93,
+        "auto_close_false_negatives": 1,
+        "auto_close_fnr": 0.010752688172043012
+      },
+      {
+        "confidence_threshold": 0.7,
+        "auto_close_count": 70,
+        "auto_close_false_negatives": 0,
+        "auto_close_fnr": 0.0
+      },
+      {
+        "confidence_threshold": 0.75,
+        "auto_close_count": 53,
+        "auto_close_false_negatives": 0,
+        "auto_close_fnr": 0.0
+      },
+      {
+        "confidence_threshold": 0.8,
+        "auto_close_count": 27,
+        "auto_close_false_negatives": 0,
+        "auto_close_fnr": 0.0
+      },
+      {
+        "confidence_threshold": 0.85,
+        "auto_close_count": 4,
+        "auto_close_false_negatives": 0,
+        "auto_close_fnr": 0.0
+      },
+      {
+        "confidence_threshold": 0.9,
+        "auto_close_count": 0,
+        "auto_close_false_negatives": 0,
+        "auto_close_fnr": null
+      },
+      {
+        "confidence_threshold": 0.95,
+        "auto_close_count": 0,
+        "auto_close_false_negatives": 0,
+        "auto_close_fnr": null
+      }
+    ],
     "recommendation": {
-      "recommended_threshold": null,
-      "note": "not computed -- Jev unavailable"
+      "recommended_threshold": 0.7,
+      "note": "threshold 0.7 keeps auto_close_fnr at 0.0 while still auto-closing 70 alerts in this sample -- the lowest such threshold, i.e. the most auto-close volume with zero observed false negatives."
     }
   }
 }

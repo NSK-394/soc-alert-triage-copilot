@@ -27,3 +27,4 @@ redis-data/
 .pytest_cache/
 .coverage
 htmlcov/
+.gstack/

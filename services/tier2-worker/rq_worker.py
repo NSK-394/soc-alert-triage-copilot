@@ -20,14 +20,24 @@ Both follow this repo's established `sys.path.insert(0, "<dir>"); import <module
 convention for hyphenated directories (see e.g. data/converters/guide_to_state.py
 or any service's tests/conftest.py).
 
-Windows note on RQ's worker classes
--------------------------------------
-RQ's default `Worker` forks a child process per job via `os.fork()`, which does not
-exist on Windows. This repo's local dev/verification environment is Windows, so this
-script uses `rq.worker.SimpleWorker` (runs each job in-process, no fork) whenever
-`os.name == "nt"`, and the standard forking `Worker` everywhere else (e.g. the Linux
-container this Dockerfile builds for). Both implement the same `Worker.work()` loop
-contract.
+Why this always uses SimpleWorker, never the forking Worker
+----------------------------------------------------------------
+RQ's default `Worker` forks a child process per job via `os.fork()`. This script
+creates ONE asyncpg pool and ONE event loop in `main()`, reused for every job (see
+"Event loop note" below) -- and asyncpg connections are not fork-safe: a forked
+child inherits the parent's already-open connections/sockets, and when the parent
+and child (or two children in quick succession) both touch what the OS still sees
+as the same underlying connection, Postgres's prepared-statement protocol gets
+confused between them. This was caught live, not theoretically: firing several
+real alerts in quick succession produced a real
+`asyncpg.exceptions.DuplicatePreparedStatementError` from exactly this race. Since
+`os.fork()` doesn't exist on Windows either (this repo's local dev/verification
+environment), the fix converges on the same answer both platforms needed anyway:
+always use `rq.worker.SimpleWorker` (runs each job in-process, no fork), never the
+forking `Worker`. For this project's single-worker-replica demo scale, sequential
+in-process job processing is correct, not a limitation -- Jev/Tier-2 calls are
+already externally rate-limited, and `run_pipeline()` already catches every
+exception per-job so one bad job can't take down the process.
 
 Event loop note
 ------------------
@@ -49,7 +59,7 @@ from pathlib import Path
 import redis
 from rq import Queue
 from rq.serializers import JSONSerializer
-from rq.worker import SimpleWorker, Worker
+from rq.worker import SimpleWorker
 
 _THIS_DIR = Path(__file__).resolve().parent
 _REPO_ROOT = _THIS_DIR.parents[1]
@@ -121,14 +131,10 @@ def main() -> None:
     # is lost by not using pickle).
     queue = Queue(QUEUE_NAME, connection=connection, serializer=JSONSerializer)
 
-    worker_cls = SimpleWorker if os.name == "nt" else Worker
-    logger.info(
-        "rq_worker: starting %s on queue %r (redis=%s)",
-        worker_cls.__name__,
-        QUEUE_NAME,
-        redis_url,
-    )
-    worker = worker_cls([queue], connection=connection, serializer=JSONSerializer)
+    # Always SimpleWorker (never the forking Worker) -- see the module docstring's
+    # "Why this always uses SimpleWorker" section for the real bug this avoids.
+    logger.info("rq_worker: starting SimpleWorker on queue %r (redis=%s)", QUEUE_NAME, redis_url)
+    worker = SimpleWorker([queue], connection=connection, serializer=JSONSerializer)
 
     try:
         worker.work()

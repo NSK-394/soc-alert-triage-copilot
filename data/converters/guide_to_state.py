@@ -56,10 +56,9 @@ see the project README's eventual limitations section for the same list):
 - `alert.rule_description`: GUIDE's `AlertTitle` is an anonymized numeric ID, not human-readable
   rule text. Prefixed `guide_alert_title_id:<id>` so it's obviously not real prose.
 - `derived.failed_auth_10m` (0), `derived.successful_auth_after_failures` (false),
-  `derived.src_ip_first_seen_days` (0 — "just seen", the suspicious reading, matching
-  feature-builder's own convention), `derived.src_ip_reputation` ("unknown"),
-  `derived.host_criticality` ("unknown"): GUIDE has no raw auth-event log stream, no IP reputation
-  feed, and no asset-criticality inventory, so these can't be computed from this dataset at all.
+  `derived.src_ip_reputation` ("unknown"), `derived.host_criticality` ("unknown"): GUIDE has no raw
+  auth-event log stream, no IP reputation feed, and no asset-criticality inventory, so these can't
+  be computed from this dataset at all.
 - `untrusted_evidence.raw_log_excerpt`: GUIDE has no raw log text field. Left as `""` rather than
   fabricating adversarial-looking "log" text — the prompt-injection test suite (a later phase) uses
   purpose-built synthetic fixtures instead, not GUIDE-derived data.
@@ -75,6 +74,12 @@ Fields that ARE genuinely computable and are computed for real (not defaulted):
   this alert's timestamp. Computed with `bisect` over each `(org_id, detector_id)` group's sorted
   timestamp list — O(n log n), not an O(n^2) all-pairs scan.
 - `derived.rule_historical_fp_rate`: real, train-only empirical FP rate per detector (see above).
+- `derived.src_ip_first_seen_days`: real, structural (not label-derived, computed across all
+  splits — same leakage rationale as `similar_alerts_24h`), the number of days between this
+  alert's timestamp and the earliest timestamp seen for the same `src_ip` (`IpAddress` column)
+  anywhere in the loaded dataset. Alerts whose contributing rows never had a non-empty `IpAddress`
+  (a real, if uncommon, case) get 0 — the same "just seen"/most-suspicious default
+  `derived_fields.py` documents for a missing lookup entry, not fabricated data.
 """
 
 from __future__ import annotations
@@ -390,13 +395,40 @@ def build_similar_alerts_index(alerts: dict[str, AlertAgg]) -> dict[str, int]:
     return index
 
 
+def build_first_seen_index(alerts: dict[str, AlertAgg]) -> dict[str, int]:
+    """`src_ip_first_seen_days` per alert: days since `first_ip` (per-alert entity, from
+    `AlertAgg.first_ip`) was first seen in this loaded dataset, as of that alert's own timestamp.
+
+    Structural, not label-derived (same rationale as `similar_alerts_24h` above) -- computed
+    across ALL splits together, no leakage risk. Grouped by `first_ip`, each group's timestamps
+    sorted once, then each alert looks up the group's minimum timestamp up to and including its
+    own -- O(n log n) via a running min over the sorted list, not per-alert rescanning.
+
+    Alerts with no `first_ip` (GUIDE's `IpAddress` column was empty for every row contributing to
+    that alert -- a real, if uncommon, case) get 0, the same "just seen"/most-suspicious default
+    `derived_fields.py` documents for a missing lookup entry -- not a special case here.
+    """
+    groups: dict[str, list[tuple[datetime, str]]] = defaultdict(list)
+    for alert_id, agg in alerts.items():
+        if agg.first_ip:
+            groups[agg.first_ip].append((agg.timestamp, alert_id))
+
+    index: dict[str, int] = {}
+    for items in groups.values():
+        items.sort(key=lambda pair: pair[0])
+        first_seen = items[0][0]  # earliest timestamp in the group, since items is sorted
+        for ts, alert_id in items:
+            index[alert_id] = (ts - first_seen).days  # always >= 0, items[0] itself gives 0
+    return index
+
+
 # ---------------------------------------------------------------------------------------------
 # Step 4: build the Jev state object
 # ---------------------------------------------------------------------------------------------
 
 
 def build_state_object(
-    agg: AlertAgg, fp_rate_table: dict[str, float], similar_count: int
+    agg: AlertAgg, fp_rate_table: dict[str, float], similar_count: int, first_seen_days: int
 ) -> dict:
     return {
         "alert": {
@@ -416,7 +448,7 @@ def build_state_object(
             "failed_auth_10m": 0,
             "successful_auth_after_failures": False,
             "off_hours": off_hours(agg.timestamp),
-            "src_ip_first_seen_days": 0,
+            "src_ip_first_seen_days": first_seen_days,
             "src_ip_reputation": "unknown",
             "host_criticality": "unknown",
             "rule_historical_fp_rate": rule_historical_fp_rate(agg.detector_id, fp_rate_table),
@@ -439,6 +471,7 @@ def write_outputs(
     alert_splits: dict[str, str],
     fp_rate_table: dict[str, float],
     similar_index: dict[str, int],
+    first_seen_index: dict[str, int],
     output_dir: Path,
 ) -> tuple[dict[str, Counter], int]:
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -459,7 +492,9 @@ def write_outputs(
             if label is None:
                 skipped_no_label += 1
 
-            state = build_state_object(agg, fp_rate_table, similar_index.get(alert_id, 0))
+            state = build_state_object(
+                agg, fp_rate_table, similar_index.get(alert_id, 0), first_seen_index.get(alert_id, 0)
+            )
             record = {
                 "source": "guide_replay",
                 "external_id": f"guide-alert-{alert_id}",
@@ -552,12 +587,14 @@ def main(argv: Optional[list[str]] = None) -> int:
     # Step 3
     fp_rate_table = compute_fp_rate_table(alerts, alert_labels, alert_splits)
 
-    # similar_alerts_24h index (structural; computed across all splits together)
+    # similar_alerts_24h / src_ip_first_seen_days indices (structural; computed across all
+    # splits together -- see build_similar_alerts_index's docstring for why that's leak-safe)
     similar_index = build_similar_alerts_index(alerts)
+    first_seen_index = build_first_seen_index(alerts)
 
     # Step 5 (writes files)
     label_dist, skipped_no_label = write_outputs(
-        alerts, alert_labels, alert_splits, fp_rate_table, similar_index, output_dir
+        alerts, alert_labels, alert_splits, fp_rate_table, similar_index, first_seen_index, output_dir
     )
 
     elapsed = time.time() - t0
