@@ -1,0 +1,4 @@
+# Test-only dependencies. Not needed at runtime -- only requirements.txt is required
+# to actually call Jev.
+-r requirements.txt
+pytest>=8.3,<9

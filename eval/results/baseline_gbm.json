@@ -1,0 +1,98 @@
+{
+  "n_train": 194392,
+  "train_subsampled": false,
+  "max_train_rows": null,
+  "fit_seconds": 12.52866816520691,
+  "features": [
+    "failed_auth_10m",
+    "successful_auth_after_failures",
+    "off_hours",
+    "src_ip_first_seen_days",
+    "src_ip_reputation",
+    "host_criticality",
+    "rule_historical_fp_rate",
+    "similar_alerts_24h"
+  ],
+  "val": {
+    "macro_f1": 0.7401319105903778,
+    "accuracy": 0.7657791292739005,
+    "per_class": {
+      "true_positive": {
+        "precision": 0.8510988558729113,
+        "recall": 0.685222001325381,
+        "f1": 0.7592055508645692,
+        "support": 15090
+      },
+      "benign_positive": {
+        "precision": 0.7142225367061737,
+        "recall": 0.9347146660493113,
+        "f1": 0.809726748558536,
+        "support": 17278
+      },
+      "false_positive": {
+        "precision": 0.7885021097046413,
+        "recall": 0.5550055686177453,
+        "f1": 0.6514634323480282,
+        "support": 8081
+      }
+    }
+  },
+  "test": {
+    "macro_f1": 0.7451507201499914,
+    "accuracy": 0.7735840264672305,
+    "per_class": {
+      "true_positive": {
+        "precision": 0.8864932171177665,
+        "recall": 0.7301236033896475,
+        "f1": 0.8007458710708577,
+        "support": 18527
+      },
+      "benign_positive": {
+        "precision": 0.7027707808564232,
+        "recall": 0.9237854433808922,
+        "f1": 0.7982624980492119,
+        "support": 16611
+      },
+      "false_positive": {
+        "precision": 0.7432641153252102,
+        "recall": 0.5564692278041886,
+        "f1": 0.6364437913299045,
+        "support": 7783
+      }
+    }
+  },
+  "permutation_importance": {
+    "failed_auth_10m": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "successful_auth_after_failures": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "off_hours": {
+      "mean": 0.009391311173378547,
+      "std": 0.0017067673089950458
+    },
+    "src_ip_first_seen_days": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "src_ip_reputation": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "host_criticality": {
+      "mean": 0.0,
+      "std": 0.0
+    },
+    "rule_historical_fp_rate": {
+      "mean": 0.34986531560086076,
+      "std": 0.009431327000672972
+    },
+    "similar_alerts_24h": {
+      "mean": 0.13570676353325964,
+      "std": 0.0017585404593525149
+    }
+  }
+}

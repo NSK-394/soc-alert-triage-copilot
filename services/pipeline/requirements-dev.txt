@@ -1,0 +1,4 @@
+# Test-only dependencies for services/pipeline/tests/.
+-r requirements.txt
+pytest>=8.3,<10
+pytest-asyncio>=0.24,<2

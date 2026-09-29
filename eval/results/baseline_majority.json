@@ -1,0 +1,51 @@
+{
+  "majority_class": "benign_positive",
+  "val": {
+    "macro_f1": 0.1995369006992684,
+    "accuracy": 0.4271551830700388,
+    "per_class": {
+      "true_positive": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 15090
+      },
+      "benign_positive": {
+        "precision": 0.4271551830700388,
+        "recall": 1.0,
+        "f1": 0.5986107020978052,
+        "support": 17278
+      },
+      "false_positive": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 8081
+      }
+    }
+  },
+  "test": {
+    "macro_f1": 0.18601760397769265,
+    "accuracy": 0.3870133501083386,
+    "per_class": {
+      "true_positive": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 18527
+      },
+      "benign_positive": {
+        "precision": 0.3870133501083386,
+        "recall": 1.0,
+        "f1": 0.558052811933078,
+        "support": 16611
+      },
+      "false_positive": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 7783
+      }
+    }
+  }
+}

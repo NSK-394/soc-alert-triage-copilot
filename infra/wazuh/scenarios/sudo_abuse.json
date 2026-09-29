@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-09-20T04:02:17.902+0000",
+  "rule": {
+    "level": 8,
+    "description": "Privilege escalation: sudo executed by non-administrative user account",
+    "id": "100050",
+    "mitre": {
+      "id": ["T1548.003"],
+      "tactic": ["Privilege Escalation", "Defense Evasion"],
+      "technique": ["Abuse Elevation Control Mechanism: Sudo and Sudo Caching"]
+    },
+    "firedtimes": 1,
+    "mail": true,
+    "groups": [
+      "syslog",
+      "sudo",
+      "privilege_escalation",
+      "local_rule",
+      "pci_dss_10.2.2",
+      "gpg13_7.6",
+      "gdpr_IV_32.2",
+      "hipaa_164.312.b",
+      "nist_800_53_AC.6",
+      "tsc_CC6.1",
+      "tsc_CC6.3"
+    ],
+    "if_sid": "5402"
+  },
+  "agent": {
+    "id": "007",
+    "name": "web-app-01",
+    "ip": "10.0.2.15"
+  },
+  "manager": {
+    "name": "wazuh-manager"
+  },
+  "id": "1758340937.5017642",
+  "cluster": {
+    "name": "wazuh-cluster1",
+    "node": "node01"
+  },
+  "full_log": "Sep 20 04:02:17 web-app-01 sudo: jenkins : TTY=pts/0 ; PWD=/home/jenkins ; USER=root ; COMMAND=/bin/bash",
+  "decoder": {
+    "name": "sudo"
+  },
+  "data": {
+    "srcuser": "jenkins",
+    "dstuser": "root",
+    "command": "/bin/bash"
+  },
+  "location": "/var/log/auth.log"
+}

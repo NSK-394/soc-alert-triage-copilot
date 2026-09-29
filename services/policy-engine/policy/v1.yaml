@@ -1,0 +1,42 @@
+# Policy Engine ruleset v1 (docs/architecture.md §8, §12 Phase C task 1)
+#
+# Deterministic, auditable, versioned rules — not a prompt. evaluator.py loads this file
+# and decides one of three actions per alert: auto_close, auto_escalate, queued. These are
+# the only three legal values of the `policy_outcomes.action` CHECK constraint
+# (infra/migrations/001_init.sql) — do not add a fourth action here without a migration.
+#
+# Severity is ordinal: informational < low < high < critical. `severity_lt` / `severity_gte`
+# compare against that order, never by string equality or lexical sort.
+#
+# never_auto_close_list is INTENTIONALLY EMPTY out of the box. This is a generic open-source
+# template — it cannot know a real SOC's actual high-severity detector rule_ids (ransomware,
+# credential-dumping, lateral-movement detectors, etc.). Operators MUST populate this list
+# with their own deployment's rule_ids before relying on auto-close in production; until then,
+# the `unless.rule_id_in_never_auto_close` guard is a no-op and provides no protection.
+#
+# Thresholds below (0.90 / 0.85, severity cutoffs) are starting defaults, not tuned values —
+# a later benchmark phase (eval/benchmark.py) sweeps them against real labeled data
+# (see threshold_sweep.py in this service) and the false-negative rate among auto-closed
+# alerts is the number that matters, per spec §8.
+
+version: v1
+
+auto_close:
+  when:
+    verdict_in: [false_positive, benign_positive]
+    confidence_gte: 0.90
+    severity_lt: low          # severity strictly below "low" (i.e. only "informational") auto-closes
+  unless:
+    host_criticality: crown_jewel
+    rule_id_in_never_auto_close: true   # true = enforce the never_auto_close_list guard below
+
+auto_escalate:
+  when:
+    verdict_in: [true_positive]
+    confidence_gte: 0.85
+    severity_gte: high
+  action: [page_pagerduty, notify_slack]
+
+default: queued
+
+never_auto_close_list: []   # populate with real high-severity rule_ids per deployment; empty by default

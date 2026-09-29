@@ -1,0 +1,55 @@
+{
+  "timestamp": "2026-09-20T03:12:44.118+0000",
+  "rule": {
+    "level": 10,
+    "description": "SSHD brute force trying to get access",
+    "id": "5712",
+    "mitre": {
+      "id": ["T1110"],
+      "tactic": ["Credential Access"],
+      "technique": ["Brute Force"]
+    },
+    "firedtimes": 8,
+    "mail": true,
+    "groups": [
+      "syslog",
+      "sshd",
+      "authentication_failures",
+      "authentication_success",
+      "pci_dss_10.2.4",
+      "pci_dss_10.2.5",
+      "pci_dss_11.4",
+      "gpg13_7.1",
+      "gdpr_IV_11.1",
+      "hipaa_164.312.b",
+      "nist_800_53_AU.14",
+      "tsc_CC6.1",
+      "tsc_CC6.8",
+      "tsc_CC7.2",
+      "tsc_CC7.3"
+    ]
+  },
+  "agent": {
+    "id": "003",
+    "name": "db-prod-02",
+    "ip": "10.0.4.22"
+  },
+  "manager": {
+    "name": "wazuh-manager"
+  },
+  "id": "1758337964.4823910",
+  "cluster": {
+    "name": "wazuh-cluster1",
+    "node": "node01"
+  },
+  "full_log": "Sep 20 03:12:44 db-prod-02 sshd[28551]: Accepted password for svc-backup from 203.0.113.7 port 51022 ssh2",
+  "decoder": {
+    "name": "sshd"
+  },
+  "data": {
+    "srcip": "203.0.113.7",
+    "srcuser": "svc-backup",
+    "dstuser": "svc-backup"
+  },
+  "location": "/var/log/auth.log"
+}

@@ -1,0 +1,7 @@
+# services/pipeline: the live ingest -> features -> Jev -> policy -> notifier ->
+# Tier-2 integration layer. `run_pipeline.py` takes an already-created `asyncpg.Pool`
+# from its caller (ingest-api's rq_worker process) rather than creating its own, but
+# it still imports `asyncpg` directly (type hints on `run_pipeline(pool: asyncpg.Pool,
+# ...)` and friends), so it needs the package importable. Pinned identically to every
+# other service in this repo that depends on it (e.g. services/ingest-api/requirements.txt).
+asyncpg>=0.30,<0.31

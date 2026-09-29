@@ -1,0 +1,114 @@
+{
+  "split": "val",
+  "max_records_requested": 2000,
+  "records_loaded": 2000,
+  "jev": {
+    "preflight_available": false,
+    "preflight_error": "JevUnavailableError (documented fail-safe contract): Jev returned a non-retryable error: POST https://api.typesafe.ai/v1/systemone: 401 Cannot authenticate with the server. Please check your API key and try again. (request_id=req_01a0ec17e989716597a20f53e1293361)",
+    "note": "Jev API unreachable/unauthorized -- no live Jev numbers in this report. See preflight_error."
+  },
+  "baseline_majority": {
+    "majority_class": "benign_positive",
+    "macro_f1": 0.1995369006992684,
+    "accuracy": 0.4271551830700388,
+    "per_class": {
+      "true_positive": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 15090
+      },
+      "benign_positive": {
+        "precision": 0.4271551830700388,
+        "recall": 1.0,
+        "f1": 0.5986107020978052,
+        "support": 17278
+      },
+      "false_positive": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 8081
+      }
+    }
+  },
+  "baseline_gbm": {
+    "macro_f1": 0.7401319105903778,
+    "accuracy": 0.7657791292739005,
+    "per_class": {
+      "true_positive": {
+        "precision": 0.8510988558729113,
+        "recall": 0.685222001325381,
+        "f1": 0.7592055508645692,
+        "support": 15090
+      },
+      "benign_positive": {
+        "precision": 0.7142225367061737,
+        "recall": 0.9347146660493113,
+        "f1": 0.809726748558536,
+        "support": 17278
+      },
+      "false_positive": {
+        "precision": 0.7885021097046413,
+        "recall": 0.5550055686177453,
+        "f1": 0.6514634323480282,
+        "support": 8081
+      }
+    }
+  },
+  "calibration": {
+    "signal": "is_false_positive_prob",
+    "note": "predicted_confidence_avg is the mean is_false_positive_prob in the bin; actual_accuracy is the empirical frequency that ground_truth_label == 'false_positive' for records in that bin (standard reliability-diagram definition: predicted P(event) vs. observed frequency of that event). Empty when Jev is unavailable.",
+    "bins": []
+  },
+  "auto_close_threshold_sweep": {
+    "policy": {
+      "version": "benchmark-v1",
+      "auto_close": {
+        "when": {
+          "verdict_in": [
+            "false_positive",
+            "benign_positive"
+          ],
+          "confidence_gte": 0.9,
+          "severity_lt": "high"
+        },
+        "unless": {
+          "host_criticality": "crown_jewel",
+          "rule_id_in_never_auto_close": true
+        }
+      },
+      "auto_escalate": {
+        "when": {
+          "verdict_in": [
+            "true_positive"
+          ],
+          "confidence_gte": 0.85,
+          "severity_gte": "high"
+        },
+        "action": [
+          "page_pagerduty",
+          "notify_slack"
+        ]
+      },
+      "default": "queued",
+      "never_auto_close_list": []
+    },
+    "confidence_signal_used": "confidence_margin (top1-top2 margin on triage_verdict's probability distribution)",
+    "thresholds_tested": [
+      0.5,
+      0.6,
+      0.7,
+      0.75,
+      0.8,
+      0.85,
+      0.9,
+      0.95
+    ],
+    "table": [],
+    "recommendation": {
+      "recommended_threshold": null,
+      "note": "not computed -- Jev unavailable"
+    }
+  }
+}

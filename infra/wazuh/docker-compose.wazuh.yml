@@ -1,0 +1,121 @@
+# docker-compose.wazuh.yml
+#
+# OPTIONAL. This runs a full real Wazuh single-node stack (manager + indexer +
+# dashboard). It is NOT required for the MVP live-demo path and is NOT wired into
+# the repo root's docker-compose.yml. The supported/tested demo path is
+# `simulate.py` POSTing fixture alerts straight at ingest-api's
+# `POST /webhook/wazuh` -- see README.md in this directory.
+#
+# Use this only if you want a fuller demo with a real Wazuh manager generating
+# and forwarding genuine alerts (e.g. via a custom integration script) instead of
+# the pre-built JSON fixtures in scenarios/. It is heavy (multiple GB of images,
+# several minutes to start, several GB of RAM) and requires TLS certificates the
+# Wazuh project generates via its own `wazuh-certs-generator` image -- this file
+# follows Wazuh's own published single-node quickstart pattern. See:
+# https://documentation.wazuh.com/current/deployment-options/docker/index.html
+#
+# NOTE: this fragment references config files under ./wazuh-config/ (certs.yml,
+# indexer/wazuh.indexer.yml, dashboard/opensearch_dashboards.yml) that are NOT
+# included in this repo -- they are Wazuh's own boilerplate, unrelated to this
+# project's code, and change with each Wazuh release. Pull the matching files
+# from Wazuh's official single-node docker deployment repo
+# (https://github.com/wazuh/wazuh-docker/tree/main/single-node) into
+# infra/wazuh/wazuh-config/ before running this. This whole file is a
+# documented starting point for operators who want the full stack, not a
+# tested part of this project's CI or demo path.
+#
+# Quickstart (after adding the wazuh-config/ files above):
+#   1. Generate certs (one-time, writes into a shared volume):
+#        docker compose -f infra/wazuh/docker-compose.wazuh.yml run --rm \
+#          generator
+#   2. Bring up the stack:
+#        docker compose -f infra/wazuh/docker-compose.wazuh.yml up -d
+#   3. Dashboard: https://localhost:5601 (default admin / admin credentials --
+#      Wazuh's docs cover changing these; do not leave defaults in anything
+#      beyond a local throwaway demo).
+#   4. Tear down:
+#        docker compose -f infra/wazuh/docker-compose.wazuh.yml down -v
+
+version: "3.8"
+
+x-wazuh-logging: &wazuh-logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  # One-shot: generates the TLS certs the manager/indexer/dashboard need to
+  # talk to each other. Run once with `docker compose run --rm generator`
+  # before the first `up`; safe to re-run (idempotent, skips if certs exist).
+  generator:
+    image: wazuh/wazuh-certs-generator:0.0.2
+    hostname: wazuh-certs-generator
+    volumes:
+      - ./wazuh-config/certs.yml:/config/certs.yml:ro
+      - wazuh_certs:/certificates/
+
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:4.9.0
+    hostname: wazuh-indexer
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+    environment:
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+    volumes:
+      - wazuh_indexer_data:/var/lib/wazuh-indexer
+      - wazuh_certs:/usr/share/wazuh-indexer/certs:ro
+      - ./wazuh-config/indexer/wazuh.indexer.yml:/usr/share/wazuh-indexer/opensearch.yml:ro
+    <<: *wazuh-logging
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.9.0
+    hostname: wazuh-manager
+    restart: unless-stopped
+    depends_on:
+      - wazuh-indexer
+    ports:
+      - "1514:1514/udp"   # agent event collection (syslog)
+      - "1515:1515/tcp"   # agent enrollment
+      - "514:514/udp"     # syslog collector
+      - "55000:55000/tcp" # Wazuh API
+    environment:
+      - INDEXER_URL=https://wazuh-indexer:9200
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=admin
+      - FILEBEAT_SSL_VERIFICATION_MODE=full
+    volumes:
+      - wazuh_manager_data:/var/ossec/data
+      - wazuh_certs:/etc/ssl/root-ca.pem:ro
+      # Drop a custom integration script here (e.g. one that forwards each
+      # triggered alert to ingest-api's /webhook/wazuh) if you want the real
+      # manager driving the demo instead of simulate.py:
+      # - ./integrations/custom-ingest-api.py:/var/ossec/integrations/custom-ingest-api.py:ro
+    <<: *wazuh-logging
+
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.9.0
+    hostname: wazuh-dashboard
+    restart: unless-stopped
+    ports:
+      - "5601:5601"
+    depends_on:
+      - wazuh-indexer
+      - wazuh-manager
+    environment:
+      - INDEXER_USERNAME=admin
+      - INDEXER_PASSWORD=admin
+      - WAZUH_API_URL=https://wazuh-manager
+      - DASHBOARD_USERNAME=admin
+      - DASHBOARD_PASSWORD=admin
+    volumes:
+      - wazuh_certs:/usr/share/wazuh-dashboard/certs:ro
+      - ./wazuh-config/dashboard/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml:ro
+    <<: *wazuh-logging
+
+volumes:
+  wazuh_certs:
+  wazuh_indexer_data:
+  wazuh_manager_data:

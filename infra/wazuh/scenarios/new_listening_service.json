@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-09-20T03:40:03.501+0000",
+  "rule": {
+    "level": 6,
+    "description": "Osquery: new listening network service detected on non-standard port",
+    "id": "100210",
+    "mitre": {
+      "id": ["T1571"],
+      "tactic": ["Command and Control"],
+      "technique": ["Non-Standard Port"]
+    },
+    "firedtimes": 1,
+    "mail": false,
+    "groups": [
+      "osquery",
+      "open_port",
+      "network_anomaly",
+      "local_rule"
+    ]
+  },
+  "agent": {
+    "id": "003",
+    "name": "db-prod-02",
+    "ip": "10.0.4.22"
+  },
+  "manager": {
+    "name": "wazuh-manager"
+  },
+  "id": "1758338403.5588120",
+  "cluster": {
+    "name": "wazuh-cluster1",
+    "node": "node01"
+  },
+  "full_log": "{\"name\":\"port_listening_processes_events\",\"hostIdentifier\":\"db-prod-02\",\"calendarTime\":\"Sun Sep 20 03:40:02 2026 UTC\",\"unixTime\":1758338402,\"action\":\"added\",\"columns\":{\"pid\":\"28551\",\"port\":\"4444\",\"protocol\":\"6\",\"family\":\"2\",\"address\":\"0.0.0.0\",\"path\":\"/tmp/.hidden/backdoor\"}}",
+  "decoder": {
+    "name": "json"
+  },
+  "data": {
+    "osquery": {
+      "name": "port_listening_processes_events",
+      "action": "added",
+      "columns": {
+        "pid": "28551",
+        "port": "4444",
+        "protocol": "6",
+        "address": "0.0.0.0",
+        "path": "/tmp/.hidden/backdoor"
+      }
+    }
+  },
+  "location": "osquery"
+}

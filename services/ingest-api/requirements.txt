@@ -1,0 +1,7 @@
+fastapi>=0.115,<0.116
+uvicorn[standard]>=0.32,<0.33
+asyncpg>=0.30,<0.31
+pydantic>=2.9,<3
+python-dotenv>=1.0,<2
+redis>=5.0,<9
+rq>=1.16,<3

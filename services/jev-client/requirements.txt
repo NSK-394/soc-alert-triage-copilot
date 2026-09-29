@@ -1,0 +1,11 @@
+# jev-client: Tier-1 (Jev) scoring client.
+#
+# `typesafe-sdk` DOES exist on PyPI and was verified installable (see client.py's module
+# docstring for details), so this service depends on it directly rather than hand-rolling
+# an httpx client. It pulls in its own transport (`httpx2`) and `pydantic`/`tenacity`
+# transitively; `tenacity` is not used directly here (this module's retry loop is
+# hand-rolled so it stays sleep-free and unit-testable -- see client.py), and the SDK's
+# own built-in retrying is disabled (RetryPolicy(max_retries=0)) in favor of that loop.
+typesafe-sdk>=0.7.0,<0.8
+python-dotenv>=1.0,<2
+pydantic>=2.9,<3

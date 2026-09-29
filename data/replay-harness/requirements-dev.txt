@@ -1,0 +1,4 @@
+# Runtime deps plus test-only tooling.
+# Mocking uses the stdlib unittest.mock, so no extra mocking library is needed.
+-r requirements.txt
+pytest>=8.0

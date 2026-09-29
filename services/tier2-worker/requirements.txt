@@ -1,0 +1,19 @@
+openai>=1.54,<3
+asyncpg>=0.30,<0.31
+pydantic>=2.9,<3
+python-dotenv>=1.0,<2
+redis>=5.0,<9
+rq>=1.16,<3
+# rq_worker.py (this service's RQ entrypoint) imports services/pipeline, which in turn
+# reaches into sibling hyphenated services (jev-client, policy-engine) via the repo's
+# usual sys.path convention (see run_pipeline.py's docstring). The Dockerfile only
+# `pip install`s THIS file into the worker image (services/jev-client and
+# services/policy-engine each have their own separate requirements.txt that never gets
+# installed here) -- so those two services' runtime deps have to be mirrored here too,
+# or the worker container can import neither `client.py` nor `evaluator.py`. Pins below
+# match services/jev-client/requirements.txt and services/policy-engine/requirements.txt
+# exactly. notifier's own runtime deps (httpx, python-dotenv, pydantic) don't need a
+# separate line: python-dotenv/pydantic are already pinned above, and httpx is already
+# pulled in transitively by the `openai` SDK's own dependency on it.
+typesafe-sdk>=0.7.0,<0.8
+pyyaml
